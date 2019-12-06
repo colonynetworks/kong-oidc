@@ -68,10 +68,10 @@ end
 
 function OidcHandler:access(config)
   OidcHandler.super.access(self)
-
-  if config.anonymous and kong.client.get_credential() then
-    -- we're already authenticated, and we're configured for using anonymous,
-    -- hence we're in a logical OR between auth methods and we're already done.
+  consumer = kong.client.get_consumer()
+  if config.anonymous and consumer and and config.anonymouss ~= consumer.id then
+    -- we're already authenticated, not as anonymous, and we're configured for
+    -- using anonymous, hence we're in a logical OR between auth methods and we're already done.
     return
   end
 
@@ -100,7 +100,7 @@ function handle(oidcConfig)
     end
   end
 
-  if response == nil then
+  if response == nil and oidcConfig.bearer_only ~= "yes" then
     response = make_oidc(oidcConfig)
     if response then
       if (response.user) then
@@ -124,10 +124,6 @@ function make_oidc(oidcConfig)
   ngx.log(ngx.DEBUG, "OidcHandler calling authenticate, requested path: " .. ngx.var.request_uri)
   local res, err = require("resty.openidc").authenticate(oidcConfig)
   if err then
-    if oidcConfig.recovery_page_path then
-      ngx.log(ngx.DEBUG, "Entering recovery page: " .. oidcConfig.recovery_page_path)
-      ngx.redirect(oidcConfig.recovery_page_path)
-    end
     if oidcConfig.anonymous then
       -- get anonymous user
       local consumer_cache_key = kong.db.consumers:cache_key(oidcConfig.anonymous)
@@ -140,8 +136,11 @@ function make_oidc(oidcConfig)
       end
 
       set_consumer(consumer, nil, nil)
-
     else
+      if oidcConfig.recovery_page_path then
+        ngx.log(ngx.DEBUG, "Entering recovery page: " .. oidcConfig.recovery_page_path)
+        ngx.redirect(oidcConfig.recovery_page_path)
+      end
       return kong.response.exit(err.status, err.message, err.headers)
     end
   end
@@ -166,8 +165,7 @@ function introspect(oidcConfig)
           end
 
           set_consumer(consumer, nil, nil)
-          -- we don't want to error, but also don't want to trigger OIDC
-          return false
+
         else
           return kong.response.exit(err.status, err.message, err.headers)
         end
