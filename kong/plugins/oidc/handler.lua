@@ -8,7 +8,7 @@ local constants = require "kong.constants"
 
 local kong = kong
 
-OidcHandler.PRIORITY = 1002
+OidcHandler.PRIORITY = 1004
 
 local function internal_server_error(err)
   kong.log.err(err)
@@ -55,6 +55,7 @@ end
 function OidcHandler:access(config)
   OidcHandler.super.access(self)
   local consumer = kong.client.get_consumer()
+  ngx.log(ngx.DEBUG, "Consumer: " .. utils.to_string(consumer))
   ngx.log(ngx.DEBUG, "Anonymous: " .. config.anonymous)
   if config.anonymous and consumer and config.anonymous ~= consumer.id then
     -- we're already authenticated, not as anonymous, and we're configured for
