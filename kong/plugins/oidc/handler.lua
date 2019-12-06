@@ -91,7 +91,7 @@ function handle(oidcConfig)
   local response
   if oidcConfig.introspection_endpoint then
     response = introspect(oidcConfig)
-    if response and response ~= "ANONYMOUS" then
+    if response then
       local tmp_user = response.user
       tmp_user.id = response.user.sub
       tmp_user.username = response.user.preferred_username
@@ -142,7 +142,7 @@ function make_oidc(oidcConfig)
       set_consumer(consumer, nil, nil)
 
     else
-      return kong.response.exit(401, err.message, err.headers)
+      return kong.response.exit(err.status, err.message, err.headers)
     end
   end
   return res
@@ -167,9 +167,9 @@ function introspect(oidcConfig)
 
           set_consumer(consumer, nil, nil)
           -- we don't want to error, but also don't want to trigger OIDC
-          return "ANONYMOUS"
+          return false
         else
-          return kong.response.exit(401, err.message, err.headers)
+          return kong.response.exit(err.status, err.message, err.headers)
         end
       end
       return nil
