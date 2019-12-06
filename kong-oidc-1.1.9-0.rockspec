@@ -1,8 +1,8 @@
 package = "kong-oidc"
-version = "1.1.8-0"
+version = "1.1.9-0"
 source = {
     url = "git://github.com/colonynetworks/kong-oidc",
-    tag = "v1.1.8",
+    tag = "v1.1.9",
     dir = "kong-oidc"
 }
 description = {

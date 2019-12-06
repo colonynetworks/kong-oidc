@@ -92,11 +92,11 @@ function handle(oidcConfig)
   if oidcConfig.introspection_endpoint then
     response = introspect(oidcConfig)
     if response then
-      local tmp_user = response.user
-      tmp_user.id = response.user.sub
-      tmp_user.username = response.user.preferred_username
-      set_consumer(tmp_user, nil, nil)
-      utils.injectUser(response)
+      local user = response
+      user.id = user.sub
+      user.username = user.preferred_username
+      set_consumer(user, nil, nil)
+      utils.injectUser(user)
     end
   end
 
