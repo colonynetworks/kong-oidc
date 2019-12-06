@@ -69,10 +69,12 @@ end
 function OidcHandler:access(config)
   OidcHandler.super.access(self)
   local consumer = kong.client.get_consumer()
+  ngx.log(ngx.DEBUG, "Anonymous: " .. consumer.id)
   if config.anonymous and consumer and config.anonymous ~= consumer.id then
     -- we're already authenticated, not as anonymous, and we're configured for
     -- using anonymous, hence we're in a logical OR between auth methods and
     -- we're already done.
+    ngx.log(ngx.DEBUG, "Consumer already set: " .. consumer.id)
     return
   end
 
