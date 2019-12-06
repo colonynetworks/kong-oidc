@@ -1,9 +1,7 @@
 local typedefs = require "kong.db.schema.typedefs"
 
 local function validate_flows(config)
-
   return true
-
 end
 
 return {
@@ -13,7 +11,7 @@ return {
     { config = {
         type = "record",
         fields = {
-          { anonymous = { type = "string", uuid = true, legacy = true }, },
+          {anonymous = { type = "string", uuid = true, legacy = true }},
           {client_id = { type = "string", required = true, default = "konglocal" }},
           {client_secret = { type = "string", required = true, default = "kongapigateway" }},
           {discovery = { type = "string", required = true, default = "https://cas.example.org:8453/cas/oidc/.well-known/openid-configuration" }},

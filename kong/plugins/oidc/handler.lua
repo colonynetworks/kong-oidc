@@ -138,7 +138,7 @@ function make_oidc(oidcConfig)
       set_consumer(consumer, nil, nil)
 
     else
-      return kong.response.exit(err.status, err.message, err.headers)
+      return kong.response.exit(401, err.message, err.headers)
     end
   end
   return res
@@ -164,7 +164,7 @@ function introspect(oidcConfig)
           set_consumer(consumer, nil, nil)
 
         else
-          return kong.response.exit(err.status, err.message, err.headers)
+          return kong.response.exit(401, err.message, err.headers)
         end
       end
       return nil
