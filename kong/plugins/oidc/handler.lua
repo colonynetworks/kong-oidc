@@ -91,7 +91,7 @@ function handle(oidcConfig)
   local response
   if oidcConfig.introspection_endpoint then
     response = introspect(oidcConfig)
-    if response then
+    if response and response ~= "ANONYMOUS" then
       local tmp_user = response.user
       tmp_user.id = response.user.sub
       tmp_user.username = response.user.preferred_username
