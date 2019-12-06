@@ -15,7 +15,7 @@ local function internal_server_error(err)
   return kong.response.exit(500, { message = "An unexpected error occurred" })
 end
 
-local function set_consumer(consumer, credential, token)
+local function set_consumer(consumer, anonymous)
   local set_header = kong.service.request.set_header
   local clear_header = kong.service.request.clear_header
 
@@ -37,29 +37,15 @@ local function set_consumer(consumer, credential, token)
     clear_header(constants.HEADERS.CONSUMER_USERNAME)
   end
 
-  kong.client.authenticate(consumer, credential)
+  kong.client.authenticate(consumer, nil)
 
-  if credential then
-    if token.scope then
-      set_header("x-authenticated-scope", token.scope)
-    else
-      clear_header("x-authenticated-scope")
-    end
-
-    if token.authenticated_userid then
-      set_header("x-authenticated-userid", token.authenticated_userid)
-    else
-      clear_header("x-authenticated-userid")
-    end
-
-    clear_header(constants.HEADERS.ANONYMOUS) -- in case of auth plugins concatenation
-
-  else
+  if anonymous then
     set_header(constants.HEADERS.ANONYMOUS, true)
-    clear_header("x-authenticated-scope")
-    clear_header("x-authenticated-userid")
+  else
+    clear_header(constants.HEADERS.ANONYMOUS)
   end
-
+  clear_header("x-authenticated-scope")
+  clear_header("x-authenticated-userid")
 end
 
 function OidcHandler:new()
@@ -98,7 +84,7 @@ function handle(oidcConfig)
       local user = response
       user.id = user.sub
       user.username = user.preferred_username
-      set_consumer(user, nil, nil)
+      set_consumer(user, false)
       utils.injectUser(user)
     end
   end
@@ -110,7 +96,7 @@ function handle(oidcConfig)
         local tmp_user = response.user
         tmp_user.id = response.user.sub
         tmp_user.username = response.user.preferred_username
-        set_consumer(tmp_user, nil, nil)
+        set_consumer(tmp_user, false)
         utils.injectUser(response.user)
       end
       if (response.access_token) then
@@ -138,7 +124,7 @@ function make_oidc(oidcConfig)
         return internal_server_error(err)
       end
 
-      set_consumer(consumer, nil, nil)
+      set_consumer(consumer, true)
     else
       if oidcConfig.recovery_page_path then
         ngx.log(ngx.DEBUG, "Entering recovery page: " .. oidcConfig.recovery_page_path)
@@ -167,7 +153,7 @@ function introspect(oidcConfig)
             return internal_server_error(err)
           end
 
-          set_consumer(consumer, nil, nil)
+          set_consumer(consumer, true)
 
         else
           return kong.response.exit(err.status, err.message, err.headers)
