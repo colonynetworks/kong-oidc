@@ -166,7 +166,8 @@ function introspect(oidcConfig)
           end
 
           set_consumer(consumer, nil, nil)
-
+          -- we don't want to error, but also don't want to trigger OIDC
+          return "ANONYMOUS"
         else
           return kong.response.exit(401, err.message, err.headers)
         end
