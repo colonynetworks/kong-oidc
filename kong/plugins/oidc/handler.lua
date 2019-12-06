@@ -141,7 +141,6 @@ function introspect(oidcConfig)
     local res, err = require("resty.openidc").introspect(oidcConfig)
     if err then
       if oidcConfig.bearer_only == "yes" then
-        ngx.header["WWW-Authenticate"] = 'Bearer realm="' .. oidcConfig.realm .. '",error="' .. err .. '"'
         if oidcConfig.anonymous then
           -- get anonymous user
           local consumer_cache_key = kong.db.consumers:cache_key(oidcConfig.anonymous)
@@ -156,6 +155,7 @@ function introspect(oidcConfig)
           set_consumer(consumer, true)
 
         else
+          ngx.header["WWW-Authenticate"] = 'Bearer realm="' .. oidcConfig.realm .. '",error="' .. err .. '"'
           return kong.response.exit(err.status, err.message, err.headers)
         end
       end
