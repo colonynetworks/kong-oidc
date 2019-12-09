@@ -14,6 +14,7 @@ return {
           {anonymous = { type = "string", uuid = true, legacy = true }},
           {client_id = { type = "string", required = true, default = "konglocal" }},
           {client_secret = { type = "string", required = true, default = "kongapigateway" }},
+          {base_url = { type = "string", required = true, default = "https://cas.example.org:8453/cas/" }},
           {discovery_suffix = { type = "string", required = true, default = "/.well-known/openid-configuration" }},
           {introspection_suffix = { type = "string", required = false, default = "/protocol/openid-connect/token/introspect" }},
           {timeout = { type = "number", required = false }},

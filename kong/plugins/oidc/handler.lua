@@ -48,6 +48,20 @@ local function set_consumer(consumer, anonymous)
   clear_header("x-authenticated-userid")
 end
 
+local function set_anonymous(oidcConfig)
+  -- get anonymous user
+  local consumer_cache_key = kong.db.consumers:cache_key(oidcConfig.anonymous)
+  local consumer, err      = kong.cache:get(consumer_cache_key, nil,
+                                            kong.client.load_consumer,
+                                            oidcConfig.anonymous, true)
+  if err then
+    kong.log.err("failed to load anonymous consumer:", err)
+    return internal_server_error(err)
+  end
+
+  set_consumer(consumer, true)
+end
+
 function OidcHandler:new()
   OidcHandler.super.new(self, "oidc")
 end
@@ -111,17 +125,7 @@ function make_oidc(oidcConfig)
     local res, err = require("resty.openidc").authenticate(oidcConfig)
     if err then
       if oidcConfig.anonymous then
-        -- get anonymous user
-        local consumer_cache_key = kong.db.consumers:cache_key(oidcConfig.anonymous)
-        local consumer, err      = kong.cache:get(consumer_cache_key, nil,
-                                                  kong.client.load_consumer,
-                                                  oidcConfig.anonymous, true)
-        if err then
-          kong.log.err("failed to load anonymous consumer:", err)
-          return internal_server_error(err)
-        end
-
-        set_consumer(consumer, true)
+        set_anonymous(oidcConfig)
       end
     else
       return res
@@ -143,18 +147,7 @@ function introspect(oidcConfig)
     if err then
       if oidcConfig.bearer_only == "yes" then
         if oidcConfig.anonymous then
-          -- get anonymous user
-          local consumer_cache_key = kong.db.consumers:cache_key(oidcConfig.anonymous)
-          local consumer, err      = kong.cache:get(consumer_cache_key, nil,
-                                                    kong.client.load_consumer,
-                                                    oidcConfig.anonymous, true)
-          if err then
-            kong.log.err("failed to load anonymous consumer:", err)
-            return internal_server_error(err)
-          end
-
-          set_consumer(consumer, true)
-
+          set_anonymous(oidcConfig)
         else
           ngx.header["WWW-Authenticate"] = 'Bearer realm="' .. oidcConfig.realm .. '",error="' .. err .. '"'
         end
