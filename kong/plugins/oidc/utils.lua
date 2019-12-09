@@ -42,15 +42,13 @@ end
 function M.get_options(config, ngx)
   return {
     anonymous = config.anonymous,
-    client_id = config.client_id,
-    client_secret = config.client_secret,
     base_url = config.base_url,
+    realm_configs = config.realm_configs,
     discovery_suffix = config.discovery_suffix,
-    introspection_suffix = config.introspection_suffix or '/protocol/openid-connect/token/introspect',
+    introspection_suffix = config.introspection_suffix,
     timeout = config.timeout,
     introspection_endpoint_auth_method = config.introspection_endpoint_auth_method,
     bearer_only = config.bearer_only,
-    realms = parseCSV(config.realms),
     redirect_uri_path = config.redirect_uri_path or M.get_redirect_uri_path(ngx),
     scope = config.scope,
     response_type = config.response_type,

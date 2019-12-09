@@ -12,15 +12,24 @@ return {
         type = "record",
         fields = {
           {anonymous = { type = "string", uuid = true, legacy = true }},
-          {client_id = { type = "string", required = true, default = "konglocal" }},
-          {client_secret = { type = "string", required = true, default = "kongapigateway" }},
           {base_url = { type = "string", required = true, default = "https://cas.example.org:8453/cas/" }},
           {discovery_suffix = { type = "string", required = true, default = "/.well-known/openid-configuration" }},
           {introspection_suffix = { type = "string", required = false, default = "/protocol/openid-connect/token/introspect" }},
           {timeout = { type = "number", required = false }},
           {introspection_endpoint_auth_method = { type = "string", required = false }},
           {bearer_only = { type = "string", required = true, default = "no" }},
-          {realms = { type = "string", required = true, default = "kong" }},
+          {realm_configs = {
+            type = "array",
+            required = true,
+            elements = {
+              type = "record",
+              fields = {
+                realm = { type = "string", default= "kong" },
+                client_id = { type = "string", default = "konglocal" },
+                client_secret = { type = "string", default = "kongapigateway" },
+              }
+            }
+          }},
           {redirect_uri_path = { type = "string" }},
           {scope = { type = "string", required = true, default = "openid" }},
           {response_type = { type = "string", required = true, default = "code" }},

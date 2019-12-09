@@ -120,10 +120,11 @@ end
 
 function make_oidc(oidcConfig)
   ngx.log(ngx.DEBUG, "OidcHandler calling authenticate, requested path: " .. ngx.var.request_uri)
-  for _, realm in ipairs(oidcConfig.realms) do
-    oidcConfig.discovery = oidcConfig.base_url .. realm .. oidcConfig.discovery_suffix
-    oidcConfig.introspection_endpoint = oidcConfig.base_url .. realm .. oidcConfig.introspection_suffix
-    local res, err = require("resty.openidc").authenticate(oidcConfig)
+  for _, realm_config in ipairs(oidcConfig.realm_configs) do
+    oidcConfig.discovery = oidcConfig.base_url .. realm_config.realm .. oidcConfig.discovery_suffix
+    oidcConfig.introspection_endpoint = oidcConfig.base_url .. realm_config.realm .. oidcConfig.introspection_suffix
+    oidcConfig.client_id = realm_config.client_id
+    oidcConfig.client_secret = realm_config.client_secretlocal res, err = require("resty.openidc").authenticate(oidcConfig)
     if err then
       if oidcConfig.anonymous then
         set_anonymous(oidcConfig)
@@ -142,9 +143,11 @@ function make_oidc(oidcConfig)
 end
 
 function introspect(oidcConfig)
-  for _, realm in ipairs(oidcConfig.realms) do
-    oidcConfig.discovery = oidcConfig.base_url .. realm .. oidcConfig.discovery_suffix
-    oidcConfig.introspection_endpoint = oidcConfig.base_url .. realm .. oidcConfig.introspection_suffix
+  for _, realm_config in ipairs(oidcConfig.realm_configs) do
+    oidcConfig.discovery = oidcConfig.base_url .. realm_config.realm .. oidcConfig.discovery_suffix
+    oidcConfig.introspection_endpoint = oidcConfig.base_url .. realm_config.realm .. oidcConfig.introspection_suffix
+    oidcConfig.client_id = realm_config.client_id
+    oidcConfig.client_secret = realm_config.client_secret
     local res, err = require("resty.openidc").introspect(oidcConfig)
     if err then
       if oidcConfig.bearer_only == "yes" then
