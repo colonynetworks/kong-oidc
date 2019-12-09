@@ -4,6 +4,14 @@ local function validate_flows(config)
   return true
 end
 
+local DEFAULT_REALM_CONFIGS = {
+  {
+    realm = "kong",
+    client_id = "konglocal",
+    client_secret = "kongapigateway"
+  },
+}
+
 return {
   name = "oidc",
   fields = {
@@ -19,17 +27,19 @@ return {
           {introspection_endpoint_auth_method = { type = "string", required = false }},
           {bearer_only = { type = "string", required = true, default = "no" }},
           {realm_configs = {
-            type = "array",
-            required = true,
-            elements = {
-              type = "record",
-              fields = {
-                realm = { type = "string", default= "kong" },
-                client_id = { type = "string", default = "konglocal" },
-                client_secret = { type = "string", default = "kongapigateway" },
+              type = "array",
+              default = DEFAULT_REALM_CONFIGS,
+              elements = {
+                type = "record",
+                custom_validator = validate_flows,
+                fields = {
+                  realm = { type = "string", default= "kong" },
+                  client_id = { type = "string", default = "konglocal" },
+                  client_secret = { type = "string", default = "kongapigateway" },
+                }
               }
             }
-          }},
+          },
           {redirect_uri_path = { type = "string" }},
           {scope = { type = "string", required = true, default = "openid" }},
           {response_type = { type = "string", required = true, default = "code" }},
