@@ -54,14 +54,10 @@ end
 
 function OidcHandler:access(config)
   OidcHandler.super.access(self)
-  local consumer = kong.client.get_consumer()
-  ngx.log(ngx.DEBUG, "Consumer: " .. utils.to_string(consumer))
-  ngx.log(ngx.DEBUG, "Anonymous: " .. config.anonymous)
-  if config.anonymous and consumer and config.anonymous ~= consumer.id then
+  if config.anonymous and kong.client.get_credential()then
     -- we're already authenticated, not as anonymous, and we're configured for
     -- using anonymous, hence we're in a logical OR between auth methods and
     -- we're already done.
-    ngx.log(ngx.DEBUG, "Consumer already set: " .. consumer.id)
     return
   end
 
@@ -79,7 +75,7 @@ end
 
 function handle(oidcConfig)
   local response
-  if oidcConfig.introspection_endpoint then
+  if utils.has_bearer_access_token() or oidcConfig.bearer_only == "yes" then
     response = introspect(oidcConfig)
     if response then
       local user = response
@@ -88,9 +84,7 @@ function handle(oidcConfig)
       set_consumer(user, false)
       utils.injectUser(user)
     end
-  end
-
-  if response == nil and oidcConfig.bearer_only ~= "yes" then
+  else
     response = make_oidc(oidcConfig)
     if response then
       if (response.user) then
@@ -112,33 +106,39 @@ end
 
 function make_oidc(oidcConfig)
   ngx.log(ngx.DEBUG, "OidcHandler calling authenticate, requested path: " .. ngx.var.request_uri)
-  local res, err = require("resty.openidc").authenticate(oidcConfig)
-  if err then
-    if oidcConfig.anonymous then
-      -- get anonymous user
-      local consumer_cache_key = kong.db.consumers:cache_key(oidcConfig.anonymous)
-      local consumer, err      = kong.cache:get(consumer_cache_key, nil,
-                                                kong.client.load_consumer,
-                                                oidcConfig.anonymous, true)
-      if err then
-        kong.log.err("failed to load anonymous consumer:", err)
-        return internal_server_error(err)
-      end
+  for realm in oidcConfig.realms do
+    oidcConfig.discovery = oidcConfig.base_url .. realm .. oidcConfig.discovery_suffix
+    local res, err = require("resty.openidc").authenticate(oidcConfig)
+    if err then
+      if oidcConfig.anonymous then
+        -- get anonymous user
+        local consumer_cache_key = kong.db.consumers:cache_key(oidcConfig.anonymous)
+        local consumer, err      = kong.cache:get(consumer_cache_key, nil,
+                                                  kong.client.load_consumer,
+                                                  oidcConfig.anonymous, true)
+        if err then
+          kong.log.err("failed to load anonymous consumer:", err)
+          return internal_server_error(err)
+        end
 
-      set_consumer(consumer, true)
-    else
-      if oidcConfig.recovery_page_path then
-        ngx.log(ngx.DEBUG, "Entering recovery page: " .. oidcConfig.recovery_page_path)
-        ngx.redirect(oidcConfig.recovery_page_path)
+        set_consumer(consumer, true)
       end
-      return kong.response.exit(err.status, err.message, err.headers)
+    else
+      return res
     end
   end
-  return res
+  if oidcConfig.recovery_page_path then
+    ngx.log(ngx.DEBUG, "Entering recovery page: " .. oidcConfig.recovery_page_path)
+    ngx.redirect(oidcConfig.recovery_page_path)
+  end
+  if not oidcConfig.anonymous then
+    return utils.exit(ngx.HTTP_UNAUTHORIZED, err, ngx.HTTP_UNAUTHORIZED)
+  end
 end
 
 function introspect(oidcConfig)
-  if utils.has_bearer_access_token() or oidcConfig.bearer_only == "yes" then
+  for realm in oidcConfig.realms do
+    oidcConfig.introspection_endpoint = oidcConfig.base_url .. realm .. oidcConfig.introspection_suffix
     local res, err = require("resty.openidc").introspect(oidcConfig)
     if err then
       if oidcConfig.bearer_only == "yes" then
@@ -157,15 +157,16 @@ function introspect(oidcConfig)
 
         else
           ngx.header["WWW-Authenticate"] = 'Bearer realm="' .. oidcConfig.realm .. '",error="' .. err .. '"'
-          return kong.response.exit(err.status, err.message, err.headers)
         end
       end
-      return nil
+    else
+      ngx.log(ngx.DEBUG, "OidcHandler introspect succeeded, requested path: " .. ngx.var.request_uri)
+      return res
     end
-    ngx.log(ngx.DEBUG, "OidcHandler introspect succeeded, requested path: " .. ngx.var.request_uri)
-    return res
   end
-  return nil
+  if not oidcConfig.anonymous then
+    return utils.exit(ngx.HTTP_UNAUTHORIZED, err, ngx.HTTP_UNAUTHORIZED)
+  end
 end
 
 return OidcHandler

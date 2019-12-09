@@ -1,14 +1,14 @@
 package = "kong-oidc"
-version = "1.2.3-0"
+version = "1.2.4-0"
 source = {
     url = "git://github.com/colonynetworks/kong-oidc",
-    tag = "v1.2.3",
+    tag = "v1.2.4",
     dir = "kong-oidc"
 }
 description = {
     summary = "A Kong plugin for implementing the OpenID Connect Relying Party (RP) functionality",
     detailed = [[
-        kong-oidc is a Kong plugin for implementing the OpenID Connect Relying Party.
+        kong-oidc is a Kong plsugin for implementing the OpenID Connect Relying Party.
 
         When used as an OpenID Connect Relying Party it authenticates users against an OpenID Connect Provider using OpenID Connect Discovery and the Basic Client Profile (i.e. the Authorization Code flow).
 

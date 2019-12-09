@@ -2,14 +2,14 @@ local cjson = require("cjson")
 
 local M = {}
 
-local function parseFilters(csvFilters)
-  local filters = {}
-  if (not (csvFilters == nil)) then
-    for pattern in string.gmatch(csvFilters, "[^,]+") do
-      table.insert(filters, pattern)
+local function parseCSV(csv)
+  local tbl = {}
+  if (not (csv == nil)) then
+    for pattern in string.gmatch(csv, "[^,]+") do
+      table.insert(tbl, pattern)
     end
   end
-  return filters
+  return tbl
 end
 
 function M.get_redirect_uri_path(ngx)
@@ -44,19 +44,20 @@ function M.get_options(config, ngx)
     anonymous = config.anonymous,
     client_id = config.client_id,
     client_secret = config.client_secret,
-    discovery = config.discovery,
-    introspection_endpoint = config.introspection_endpoint,
+    base_url = config.base_url,
+    discovery_suffix = config.discovery_suffix,
+    introspection_suffix = config.introspection_suffix or '/protocol/openid-connect/token/introspect',
     timeout = config.timeout,
     introspection_endpoint_auth_method = config.introspection_endpoint_auth_method,
     bearer_only = config.bearer_only,
-    realm = config.realm,
+    realm = parseCSV(config.realm),
     redirect_uri_path = config.redirect_uri_path or M.get_redirect_uri_path(ngx),
     scope = config.scope,
     response_type = config.response_type,
     ssl_verify = config.ssl_verify,
     token_endpoint_auth_method = config.token_endpoint_auth_method,
     recovery_page_path = config.recovery_page_path,
-    filters = parseFilters(config.filters),
+    filters = parseCSV(config.filters),
     logout_path = config.logout_path,
     redirect_after_logout_uri = config.redirect_after_logout_uri,
   }
