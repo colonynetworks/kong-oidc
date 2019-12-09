@@ -50,7 +50,7 @@ function M.get_options(config, ngx)
     timeout = config.timeout,
     introspection_endpoint_auth_method = config.introspection_endpoint_auth_method,
     bearer_only = config.bearer_only,
-    realm = parseCSV(config.realm),
+    realms = parseCSV(config.realms),
     redirect_uri_path = config.redirect_uri_path or M.get_redirect_uri_path(ngx),
     scope = config.scope,
     response_type = config.response_type,
