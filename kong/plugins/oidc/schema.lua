@@ -33,9 +33,9 @@ return {
                 type = "record",
                 custom_validator = validate_flows,
                 fields = {
-                  realm = { type = "string", default= "kong" },
-                  client_id = { type = "string", default = "konglocal" },
-                  client_secret = { type = "string", default = "kongapigateway" },
+                  {realm = { type = "string", default= "kong" }},
+                  {client_id = { type = "string", default = "konglocal" }},
+                  {client_secret = { type = "string", default = "kongapigateway" }},
                 }
               }
             }
