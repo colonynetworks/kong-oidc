@@ -122,6 +122,7 @@ function make_oidc(oidcConfig)
   ngx.log(ngx.DEBUG, "OidcHandler calling authenticate, requested path: " .. ngx.var.request_uri)
   for _, realm in ipairs(oidcConfig.realms) do
     oidcConfig.discovery = oidcConfig.base_url .. realm .. oidcConfig.discovery_suffix
+    oidcConfig.introspection_endpoint = oidcConfig.base_url .. realm .. oidcConfig.introspection_suffix
     local res, err = require("resty.openidc").authenticate(oidcConfig)
     if err then
       if oidcConfig.anonymous then
@@ -142,6 +143,7 @@ end
 
 function introspect(oidcConfig)
   for _, realm in ipairs(oidcConfig.realms) do
+    oidcConfig.discovery = oidcConfig.base_url .. realm .. oidcConfig.discovery_suffix
     oidcConfig.introspection_endpoint = oidcConfig.base_url .. realm .. oidcConfig.introspection_suffix
     local res, err = require("resty.openidc").introspect(oidcConfig)
     if err then
